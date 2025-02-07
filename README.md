@@ -340,8 +340,147 @@ If you mess up any configuration file under
 `/var/snap/ghostscript-printer-app/common/`, simply delete it (or move
 it away) and restart the Snap to get it restored.
 
+## THE ROCK (OCI CONTAINER IMAGE)
 
-## BUILDING WITHOUT SNAP
+### Install from Docker Hub
+#### Prerequisites
+
+1. **Docker Installed**: Ensure Docker is installed on your system. You can download it from the [official Docker website](https://www.docker.com/get-started).
+```sh
+  sudo snap install docker
+```
+
+#### Step-by-Step Guide
+
+You can pull the `ghostscript-printer-app` Docker image from either the GitHub Container Registry or Docker Hub.
+
+**From GitHub Container Registry** <br>
+To pull the image from the GitHub Container Registry, run the following command:
+```sh
+  sudo docker pull ghcr.io/openprinting/ghostscript-printer-app:latest
+```
+
+To run the container after pulling the image from the GitHub Container Registry, use:
+```sh
+  sudo docker run -d \
+      --name ghostscript-printer-app \
+      --network host \
+      -e PORT=<port> \
+      ghcr.io/openprinting/ghostscript-printer-app:latest
+```
+
+**From Docker Hub** <br>
+Alternatively, you can pull the image from Docker Hub, by running:
+```sh
+  sudo docker pull openprinting/ghostscript-printer-app
+```
+
+To run the container after pulling the image from Docker Hub, use:
+```sh
+  sudo docker run -d \
+      --name ghostscript-printer-app \
+      --network host \
+      -e PORT=<port> \
+      openprinting/ghostscript-printer-app:latest
+```
+
+- `PORT` is an optional environment variable used to start the printer-app on a specified port. If not provided, it will start on the default port 8000 or, if port 8000 is busy, on 8001 and so on.
+- **The container must be started in `--network host` mode** to allow the Printer-Application instance inside the container to access and discover printers available in the local network where the host system is in.
+- Alternatively using the internal network of the Docker instance (`-p <port>:8000` instead of `--network host -e PORT=<port>`) only gives access to local printers running on the host system itself.
+
+### Setting Up and Running gutenprint-printer-app locally
+
+#### Prerequisites
+
+**Docker Installed**: Ensure Docker is installed on your system. You can download it from the [official Docker website](https://www.docker.com/get-started) or from the Snap Store:
+```sh
+  sudo snap install docker
+```
+
+**Rockcraft**: Rockcraft should be installed. You can install Rockcraft using the following command:
+```sh
+  sudo snap install rockcraft --classic
+```
+
+**Skopeo**: Skopeo should be installed to compile `*.rock` files into Docker images. It comes bundled with Rockcraft, so no separate installation is required.
+
+#### Step-by-Step Guide
+
+**Build ghostscript-printer-app rock**
+
+The first step is to build the Rock from the `rockcraft.yaml`. This image will contain all the configurations and dependencies required to run ghostscript-printer-app.
+
+Open your terminal and navigate to the directory containing your `rockcraft.yaml`, then run the following command:
+
+```sh
+  rockcraft pack -v
+```
+
+**Compile to Docker Image**
+
+Once the rock is built, you need to compile docker image from it.
+
+```sh
+  sudo rockcraft.skopeo --insecure-policy copy oci-archive:<rock_image> docker-daemon:ghostscript-printer-app:latest
+```
+
+**Run the ghostscript-printer-app Docker Container**
+
+```sh
+  sudo docker run -d \
+      --name ghostscript-printer-app \
+      --network host \
+      -e PORT=<port> \
+      ghostscript-printer-app:latest
+```
+- `PORT` is an optional environment variable used to start the printer-app on a specified port. If not provided, it will start on the default port 8000 or, if port 8000 is busy, on 8001 and so on.
+- **The container must be started in `--network host` mode** to allow the Printer-Application instance inside the container to access and discover printers available in the local network where the host system is in.
+- Alternatively using the internal network of the Docker instance (`-p <port>:8000` instead of `--network host -e PORT=<port>`) only gives access to local printers running on the host system itself.
+
+#### Setting up
+
+Enter the web interface
+
+```sh
+http://localhost:<port>/
+```
+
+Use the web interface to add a printer. Supply a name, select the
+discovered printer, then select make and model. Also set the installed
+accessories, loaded media and the option defaults. If the printer is a
+PostScript printer, accessory configuration and option defaults can
+also often get polled from the printer.
+
+<!-- Begin Included Components -->
+## Included Components
+  - pappl v1.4.8
+  - qpdf v11.9.1
+  - ghostscript ghostpdl-10.05.0-test-base-001
+  - cups v2.4.11
+  - libcupsfilters 2.1.0
+  - libppd 2.1.0
+  - cups-filters 2.0.1
+  - pyppd release-1-1-0
+  - foomatic-db 20240504
+  - hplip debian/3.22.10+dfsg0-6
+  - c2050 debian/0.3-7
+  - cjet debian/0.8.9-11
+  - min12xxw debian/0.0.9-11
+  - pnm2ppa debian/1.13-13
+  - c2esp debian/27-11
+  - dymo-cups-drivers debian/1.4.0-12
+  - foo2zjs debian/20200505dfsg0-3
+  - fxlinuxprint debian/1.1.0+ds-4
+  - m2300w debian/0.51-15
+  - printer-driver-oki 1.0.2
+  - pxljr debian/1.4+repack0-6
+  - rastertosag-gdi debian/0.1-8
+  - splix debian/2.0.1-1
+  - brlaser v6
+  - ptouch-driver debian/1.7-1
+<!-- End Included Components -->
+
+## BUILDING WITHOUT PACKAGING OR INSTALLATION
 
 You can also do a "quick-and-dirty" build without snapping and without
 needing to install [PAPPL](https://www.msweet.org/pappl),
